@@ -29,7 +29,6 @@ namespace exam
                 {
                     MessageBox.Show(ex.Message);
                 }
-                //label1.Text = connected.ToString();
                 return connected;
             }
             public void DBClose()
@@ -41,12 +40,11 @@ namespace exam
         {
             InitializeComponent();
         }
-        private void button1_Click(object sender, EventArgs e)
-        {
-        }
+
 
         private void button2_Click(object sender, EventArgs e)
         {
+            listBox1.Items.Clear();
             DbWork work = new DbWork();
             work.DBConnect();
             String selectSQL = "SELECT firstname,secondname,sex FROM students";
@@ -60,18 +58,74 @@ namespace exam
                 listBox1.Items.Add(reader.GetString(0) + " " + reader.GetString(1) +
                     " " + reader.GetString(2));
             }
-            reader.Close();
-            
+            reader.Close();      
             work.DBClose();
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            DbWork work = new DbWork();
-            work.DBConnect();
-            String insertSQL = "INSERT INTO students(id,firstname,lastname,sex) " +
-                "VALUES (null,@param1,@param2,@param3)";
-
+            String name = textBox1.Text.Trim();
+            String lastname=textBox2.Text.Trim();
+            String sex = comboBox1.Text;
+            if (!name.Equals("") && !lastname.Equals("") && !sex.Equals(""))
+            {
+                DbWork work = new DbWork();
+                work.DBConnect();
+                String insertSQL = "INSERT INTO students(id,firstname,secondname,sex) VALUES (null,@param1,@param2,@param3)";
+                MySqlCommand cmd = new MySqlCommand(insertSQL, work.conn);
+                cmd.Parameters.AddWithValue("@param1", name);
+                cmd.Parameters.AddWithValue("@param2", lastname);
+                cmd.Parameters.AddWithValue("@param3", sex);
+                int rowsAffected = cmd.ExecuteNonQuery();
+                if (rowsAffected > 0)
+                {
+                    label1.Text = "Запись в БД внесена";
+                } else
+                {
+                    label1.Text = "Ошибка записи";
+                }
+                work.DBClose();
+            } else
+            {
+                MessageBox.Show("А писать кто будет??", "нуб детектед!!!");
+            }
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            if (listBox1.SelectedIndex!=-1)
+            {
+                DbWork work = new DbWork();
+                work.DBConnect();
+                String selectSQL = "SELECT id FROM students WHERE firstname=@param1 AND secondname=@param2";
+                MySqlCommand cmd = new MySqlCommand();
+                cmd.Connection = work.conn;
+                cmd.CommandText = selectSQL;
+                cmd.Parameters.AddWithValue("param1", textBox1.Text.Trim());
+                cmd.Parameters.AddWithValue("param2", textBox2.Text.Trim());
+                MySqlDataReader reader = cmd.ExecuteReader();
+                reader.Read();
+                int id = reader.GetInt32(0);
+                reader.Close();
+                String updSQL = "UPDATE students SET firstname=@param3, secondname=@param4, sex=@Param5 WHERE id=@param6";
+                MySqlCommand updCmd = new MySqlCommand();
+                updCmd.Connection = work.conn;
+                updCmd.CommandText = updSQL;
+                updCmd.Parameters.AddWithValue("param3", textBox1.Text.Trim());
+                updCmd.Parameters.AddWithValue("param4", textBox2.Text.Trim());
+                updCmd.Parameters.AddWithValue("param5", comboBox1.Text);
+                updCmd.Parameters.AddWithValue("param6", id);
+                updCmd.ExecuteNonQuery();
+            }
+        }
+        private void listBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            String[] str = listBox1.Items[listBox1.SelectedIndex].ToString().Split(' ');
+            textBox1.Text = str[0];
+            textBox2.Text = str[1];
+            comboBox1.Text = str[2];
+        }
+
+
     }
 }
